@@ -4,32 +4,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Crazy Bites - Administración</title>
+<title>Crazy Bites | Administración</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-body{font-family:Arial,sans-serif;background:#fff7ed;color:#222;margin:0;padding:16px;max-width:1000px;margin:auto}
+body{font-family:Arial,sans-serif;background:#fff7ed;color:#29202e;margin:0;padding:14px;max-width:1000px;margin:auto}
 h1{color:#b52c18}
-section{background:white;padding:16px;margin:15px 0;border-radius:12px;box-shadow:0 2px 8px #ddd}
-input,button{font-size:16px;padding:10px;margin:5px 0;border-radius:7px;box-sizing:border-box}
-input:not([type=checkbox]){width:100%;border:1px solid #ccc}
+section{background:white;padding:15px;margin:14px 0;border-radius:13px;box-shadow:0 2px 8px #ddd}
+input,button{font:inherit;padding:10px;margin:5px 0;border-radius:7px;box-sizing:border-box}
+input:not([type=checkbox]):not([type=file]){width:100%;border:1px solid #ccc}
 button{background:#b52c18;color:white;border:0;cursor:pointer}
-
-table{width:100%;border-collapse:collapse;min-width:520px}
+table{width:100%;min-width:700px;border-collapse:collapse}
 td,th{padding:8px;border-bottom:1px solid #ddd;text-align:left;vertical-align:middle}
 .wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
-td input:not([type=checkbox]){width:120px;max-width:120px}
-td input[type=number]{width:85px;max-width:85px}
-td input[type=checkbox]{width:24px;height:24px}
+td input:not([type=checkbox]):not([type=file]){width:110px;max-width:110px}
+td input[type=number]{width:80px;max-width:80px}
+td input[type=checkbox]{width:22px;height:22px}
 td button{white-space:nowrap}
-
-.hidden{display:none}
+.preview{width:65px;height:65px;object-fit:cover;border-radius:8px}
+.small{font-size:13px;color:#666}
 #status{background:#eee;padding:12px;border-radius:8px;white-space:pre-wrap}
+.hidden{display:none}
+.profit{font-weight:bold;color:#187747}
 </style>
 </head>
 <body>
 <h1>🌶️ Crazy Bites</h1>
 <h2>Panel de administración</h2>
-<p>Inicia sesión con tu cuenta administradora.</p>
+<p>Productos, fotografías, costos y ganancias.</p>
 <div id="status">Conectando...</div>
 
 <section id="login">
@@ -47,26 +48,50 @@ td button{white-space:nowrap}
 </section>
 
 <section>
-<h3>Agregar producto</h3>
-<input id="pn" placeholder="Nombre del producto">
-<input id="pd" placeholder="Descripción">
-<input id="pp" type="number" min="0" step="0.01" placeholder="Precio">
-<input id="ps" type="number" min="0" step="1" placeholder="Existencia">
-<label><input id="pav" type="checkbox" checked> Disponible</label><br>
-<button id="addP">Agregar producto</button>
-<h3>Productos registrados</h3>
-<div class="wrap"><table><thead><tr><th>Producto</th><th>Precio</th><th>Stock</th><th>Disponible</th><th></th></tr></thead><tbody id="products"></tbody></table></div>
+<h3>➕ Agregar producto</h3>
+<label>Nombre</label>
+<input id="newName" placeholder="Ej. Sandías locas">
+<label>Descripción</label>
+<input id="newDescription" placeholder="Descripción del producto">
+<label>Precio de venta ($)</label>
+<input id="newPrice" type="number" min="0" step="0.01" placeholder="60">
+<label>Costo de preparación por unidad ($)</label>
+<input id="newCost" type="number" min="0" step="0.01" placeholder="25">
+<label>Existencia</label>
+<input id="newStock" type="number" min="0" step="1" placeholder="10">
+<label>Fotografía del producto</label>
+<input id="newImage" type="file" accept="image/*">
+<label><input id="newAvailable" type="checkbox" checked> Disponible</label><br>
+<button id="addProduct">Agregar producto</button>
+<p class="small">La ganancia calculada es precio de venta menos costo de preparación. No incluye otros gastos del negocio.</p>
 </section>
 
 <section>
-<h3>Agregar ingrediente</h3>
-<input id="in" placeholder="Nombre del ingrediente">
-<input id="ie" type="number" min="0" step="0.01" placeholder="Precio extra">
-<input id="is" type="number" min="0" step="1" placeholder="Existencia">
-<label><input id="iav" type="checkbox" checked> Disponible</label><br>
-<button id="addI">Agregar ingrediente</button>
-<h3>Ingredientes registrados</h3>
-<div class="wrap"><table><thead><tr><th>Ingrediente</th><th>Extra</th><th>Stock</th><th>Disponible</th><th></th></tr></thead><tbody id="ingredients"></tbody></table></div>
+<h3>📊 Resumen de productos</h3>
+<p id="summary"></p>
+<div class="wrap">
+<table>
+<thead><tr><th>Foto</th><th>Producto</th><th>Venta $</th><th>Costo $</th><th>Ganancia $</th><th>Margen</th><th>Stock</th><th>Disponible</th><th>Foto nueva</th><th>Guardar</th></tr></thead>
+<tbody id="productRows"></tbody>
+</table>
+</div>
+<p class="small">Desliza la tabla hacia los lados para ver todas las columnas.</p>
+</section>
+
+<section>
+<h3>🥒 Ingredientes</h3>
+<h4>Agregar ingrediente</h4>
+<input id="newIngredient" placeholder="Nombre del ingrediente">
+<input id="newExtra" type="number" min="0" step="0.01" placeholder="Precio extra al cliente">
+<input id="newIngredientStock" type="number" min="0" step="1" placeholder="Existencia">
+<label><input id="newIngredientAvailable" type="checkbox" checked> Disponible</label><br>
+<button id="addIngredient">Agregar ingrediente</button>
+<div class="wrap">
+<table>
+<thead><tr><th>Ingrediente</th><th>Extra $</th><th>Stock</th><th>Disponible</th><th>Guardar</th></tr></thead>
+<tbody id="ingredientRows"></tbody>
+</table>
+</div>
 </section>
 </div>
 
@@ -75,114 +100,165 @@ const URL_SUPABASE="https://rqsscrkqucvpdsvywfzx.supabase.co";
 const CLAVE_PUBLICA="sb_publishable_Szo8AiYpTfg6YY9DuGv9Nw_p4pV3RHw";
 const db=supabase.createClient(URL_SUPABASE,CLAVE_PUBLICA);
 const $=id=>document.getElementById(id);
-const status=m=>$("status").textContent=m;
+const status=msg=>$("status").textContent=msg;
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-let productos=[],ingredientes=[];
+const money=n=>"$"+Number(n||0).toFixed(2);
+let products=[],ingredients=[];
 
-async function comprobarAdmin(){
+async function uploadPhoto(file){
+ if(!file)return null;
+ if(!file.type.startsWith("image/"))throw Error("Selecciona un archivo de imagen.");
+ if(file.size>5*1024*1024)throw Error("La imagen debe pesar menos de 5 MB.");
+ const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+ const path=Date.now()+"-"+Math.random().toString(36).slice(2)+"-"+safeName;
+ const {error}=await db.storage.from("product-images").upload(path,file,{upsert:false,contentType:file.type});
+ if(error)throw error;
+ const {data}=db.storage.from("product-images").getPublicUrl(path);
+ return data.publicUrl;
+}
+
+async function checkAdmin(){
  const {data:{user},error:userError}=await db.auth.getUser();
  if(userError||!user){
-  $("login").classList.remove("hidden");
-  $("panel").classList.add("hidden");
-  return false;
+  $("login").classList.remove("hidden");$("panel").classList.add("hidden");
+  status("Inicia sesión con tu cuenta administradora.");return;
  }
  const {data,error}=await db.from("admin_users").select("user_id").eq("user_id",user.id).maybeSingle();
- if(error){
+ if(error||!data){
   await db.auth.signOut();
-  status("No se pudieron comprobar los permisos de administrador: "+error.message);
-  return false;
- }
- if(!data){
-  await db.auth.signOut();
-  status("Esta cuenta no aparece en la tabla admin_users como administrador.");
-  return false;
- }
- $("login").classList.add("hidden");
- $("panel").classList.remove("hidden");
- $("user").textContent="Sesión: "+(user.email||"Administrador");
- await cargar();
- return true;
-}
-
-async function cargar(){
- status("Cargando datos...");
- const [p,i]=await Promise.all([
-  db.from("products").select("id,name,description,price,stock,is_available").order("name"),
-  db.from("ingredients").select("id,name,extra_price,stock,is_available").order("name")
- ]);
- if(p.error||i.error){
-  status("Error al cargar: "+(p.error?.message||i.error?.message));
+  $("login").classList.remove("hidden");$("panel").classList.add("hidden");
+  status("No se pudieron comprobar los permisos de administrador. "+(error?.message||"Verifica tu cuenta."));
   return;
  }
- productos=p.data||[];
- ingredientes=i.data||[];
- $("products").innerHTML=productos.map(x=>`<tr>
- <td><input id="pn${esc(x.id)}" value="${esc(x.name)}"></td>
- <td><input id="pp${esc(x.id)}" type="number" min="0" step="0.01" value="${Number(x.price)}"></td>
- <td><input id="ps${esc(x.id)}" type="number" min="0" step="1" value="${Number(x.stock)}"></td>
- <td><input id="pa${esc(x.id)}" type="checkbox" ${x.is_available?"checked":""}></td>
- <td><button data-p="${esc(x.id)}">Guardar</button></td></tr>`).join("");
- $("ingredients").innerHTML=ingredientes.map(x=>`<tr>
- <td><input id="in${esc(x.id)}" value="${esc(x.name)}"></td>
- <td><input id="ie${esc(x.id)}" type="number" min="0" step="0.01" value="${Number(x.extra_price||0)}"></td>
- <td><input id="is${esc(x.id)}" type="number" min="0" step="1" value="${Number(x.stock)}"></td>
- <td><input id="ia${esc(x.id)}" type="checkbox" ${x.is_available?"checked":""}></td>
- <td><button data-i="${esc(x.id)}">Guardar</button></td></tr>`).join("");
- document.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>guardarProducto(b.dataset.p));
- document.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>guardarIngrediente(b.dataset.i));
- status("Datos cargados. Puedes editar los campos y pulsar Guardar.");
+ $("login").classList.add("hidden");$("panel").classList.remove("hidden");
+ $("user").textContent="Sesión: "+(user.email||"Administrador");
+ await loadData();
 }
 
-async function guardarProducto(id){
- const name=$("pn"+id).value.trim(),price=Number($("pp"+id).value),stock=Number($("ps"+id).value);
- if(!name||!Number.isFinite(price)||price<0||!Number.isInteger(stock)||stock<0){status("Revisa nombre, precio y existencia.");return}
- const {error}=await db.from("products").update({name,price,stock,is_available:$("pa"+id).checked}).eq("id",id);
- if(error){status("No se pudo guardar el producto: "+error.message);return}
- status("Producto actualizado.");await cargar();
+async function loadData(){
+ status("Cargando productos e ingredientes...");
+ const [p,i]=await Promise.all([
+  db.from("products").select("id,name,description,price,unit_cost,stock,is_available,image_url").order("name"),
+  db.from("ingredients").select("id,name,extra_price,stock,is_available").order("name")
+ ]);
+ if(p.error||i.error){status("Error de lectura: "+(p.error?.message||i.error?.message));return}
+ products=p.data||[];ingredients=i.data||[];
+ renderProducts();renderIngredients();
+ const totalProfit=products.reduce((sum,p)=>sum+(Number(p.price)-Number(p.unit_cost||0))*Number(p.stock||0),0);
+ $("summary").textContent="Productos: "+products.length+" · Ganancia estimada si vendes todo el stock actual: "+money(totalProfit)+". No descuenta otros gastos.";
+ status("Datos cargados correctamente.");
 }
 
-async function guardarIngrediente(id){
- const name=$("in"+id).value.trim(),extra_price=Number($("ie"+id).value),stock=Number($("is"+id).value);
- if(!name||!Number.isFinite(extra_price)||extra_price<0||!Number.isInteger(stock)||stock<0){status("Revisa nombre, precio extra y existencia.");return}
- const {error}=await db.from("ingredients").update({name,extra_price,stock,is_available:$("ia"+id).checked}).eq("id",id);
+function renderProducts(){
+ $("productRows").innerHTML=products.map(p=>{
+  const profit=Number(p.price)-Number(p.unit_cost||0);
+  const margin=Number(p.price)>0?profit/Number(p.price)*100:0;
+  const img=p.image_url?`<img class="preview" src="${esc(p.image_url)}" alt="Foto de ${esc(p.name)}">`:"Sin foto";
+  return `<tr>
+  <td>${img}</td>
+  <td><input id="name-${esc(p.id)}" value="${esc(p.name)}"><input id="desc-${esc(p.id)}" value="${esc(p.description||"")}" placeholder="Descripción"></td>
+  <td><input id="price-${esc(p.id)}" type="number" min="0" step="0.01" value="${Number(p.price)}"></td>
+  <td><input id="cost-${esc(p.id)}" type="number" min="0" step="0.01" value="${Number(p.unit_cost||0)}"></td>
+  <td class="profit" id="profit-${esc(p.id)}">${money(profit)}</td>
+  <td id="margin-${esc(p.id)}">${margin.toFixed(1)}%</td>
+  <td><input id="stock-${esc(p.id)}" type="number" min="0" step="1" value="${Number(p.stock)}"></td>
+  <td><input id="available-${esc(p.id)}" type="checkbox" ${p.is_available?"checked":""}></td>
+  <td><input id="photo-${esc(p.id)}" type="file" accept="image/*"></td>
+  <td><button data-save-product="${esc(p.id)}">Guardar</button></td>
+  </tr>`;
+ }).join("");
+ products.forEach(p=>{
+  ["price","cost"].forEach(field=>$(`${field}-${p.id}`).addEventListener("input",()=>{
+   const price=Number($(`price-${p.id}`).value),cost=Number($(`cost-${p.id}`).value);
+   const profit=price-cost,margin=price>0?profit/price*100:0;
+   $(`profit-${p.id}`).textContent=money(profit);
+   $(`margin-${p.id}`).textContent=margin.toFixed(1)+"%";
+  }));
+ });
+ document.querySelectorAll("[data-save-product]").forEach(b=>b.onclick=()=>saveProduct(b.dataset.saveProduct));
+}
+
+function renderIngredients(){
+ $("ingredientRows").innerHTML=ingredients.map(i=>`<tr>
+ <td><input id="iname-${esc(i.id)}" value="${esc(i.name)}"></td>
+ <td><input id="iextra-${esc(i.id)}" type="number" min="0" step="0.01" value="${Number(i.extra_price||0)}"></td>
+ <td><input id="istock-${esc(i.id)}" type="number" min="0" step="1" value="${Number(i.stock)}"></td>
+ <td><input id="iavail-${esc(i.id)}" type="checkbox" ${i.is_available?"checked":""}></td>
+ <td><button data-save-ingredient="${esc(i.id)}">Guardar</button></td></tr>`).join("");
+ document.querySelectorAll("[data-save-ingredient]").forEach(b=>b.onclick=()=>saveIngredient(b.dataset.saveIngredient));
+}
+
+async function saveProduct(id){
+ try{
+  const name=$(`name-${id}`).value.trim();
+  const description=$(`desc-${id}`).value.trim();
+  const price=Number($(`price-${id}`).value),cost=Number($(`cost-${id}`).value),stock=Number($(`stock-${id}`).value);
+  if(!name||price<0||cost<0||!Number.isFinite(price)||!Number.isFinite(cost)||!Number.isInteger(stock)||stock<0){status("Revisa nombre, precio, costo y stock.");return}
+  status("Guardando producto...");
+  let image_url=products.find(p=>String(p.id)===String(id))?.image_url||null;
+  const file=$(`photo-${id}`).files[0];
+  if(file)image_url=await uploadPhoto(file);
+  const {error}=await db.from("products").update({
+   name,description,price,unit_cost:cost,stock,
+   is_available:$(`available-${id}`).checked,image_url
+  }).eq("id",id);
+  if(error)throw error;
+  status("Producto actualizado.");await loadData();
+ }catch(e){status("No se pudo guardar: "+(e.message||String(e)))}
+}
+
+$("addProduct").onclick=async()=>{
+ try{
+  const name=$("newName").value.trim(),description=$("newDescription").value.trim();
+  const price=Number($("newPrice").value),cost=Number($("newCost").value),stock=Number($("newStock").value);
+  if(!name||$("newPrice").value===""||$("newCost").value===""||$("newStock").value===""||!Number.isFinite(price)||!Number.isFinite(cost)||price<0||cost<0||!Number.isInteger(stock)||stock<0){status("Completa nombre, precio, costo y stock correctamente.");return}
+  status("Agregando producto...");
+  const file=$("newImage").files[0];
+  const image_url=file?await uploadPhoto(file):null;
+  const {error}=await db.from("products").insert({
+   name,description,price,unit_cost:cost,stock,
+   is_available:$("newAvailable").checked,image_url
+  });
+  if(error)throw error;
+  ["newName","newDescription","newPrice","newCost","newStock","newImage"].forEach(id=>$(id).value="");
+  status("Producto agregado correctamente.");await loadData();
+ }catch(e){status("No se pudo agregar: "+(e.message||String(e)))}
+};
+
+async function saveIngredient(id){
+ const name=$(`iname-${id}`).value.trim();
+ const extra_price=Number($(`iextra-${id}`).value),stock=Number($(`istock-${id}`).value);
+ if(!name||!Number.isFinite(extra_price)||extra_price<0||!Number.isInteger(stock)||stock<0){status("Revisa nombre, precio extra y stock.");return}
+ const {error}=await db.from("ingredients").update({
+  name,extra_price,stock,is_available:$(`iavail-${id}`).checked
+ }).eq("id",id);
  if(error){status("No se pudo guardar el ingrediente: "+error.message);return}
- status("Ingrediente actualizado.");await cargar();
+ status("Ingrediente actualizado.");await loadData();
 }
+
+$("addIngredient").onclick=async()=>{
+ const name=$("newIngredient").value.trim(),extra_price=Number($("newExtra").value),stock=Number($("newIngredientStock").value);
+ if(!name||$("newExtra").value===""||$("newIngredientStock").value===""||!Number.isFinite(extra_price)||extra_price<0||!Number.isInteger(stock)||stock<0){status("Completa nombre, precio extra y stock.");return}
+ const {error}=await db.from("ingredients").insert({name,extra_price,stock,is_available:$("newIngredientAvailable").checked});
+ if(error){status("No se pudo agregar el ingrediente: "+error.message);return}
+ $("newIngredient").value=$("newExtra").value=$("newIngredientStock").value="";
+ status("Ingrediente agregado.");await loadData();
+};
 
 $("loginBtn").onclick=async()=>{
  const email=$("email").value.trim(),password=$("password").value;
- if(!email||!password){status("Escribe tu correo y contraseña.");return}
+ if(!email||!password){status("Escribe correo y contraseña.");return}
  status("Iniciando sesión...");
  const {error}=await db.auth.signInWithPassword({email,password});
  if(error){status("Error de acceso: "+error.message);return}
- await comprobarAdmin();
+ await checkAdmin();
 };
-
-$("addP").onclick=async()=>{
- const name=$("pn").value.trim(),description=$("pd").value.trim(),price=Number($("pp").value),stock=Number($("ps").value);
- if(!name||$("pp").value===""||$("ps").value===""||!Number.isFinite(price)||price<0||!Number.isInteger(stock)||stock<0){status("Completa nombre, precio y existencia correctamente.");return}
- const {error}=await db.from("products").insert({name,description,price,stock,is_available:$("pav").checked});
- if(error){status("No se pudo agregar: "+error.message);return}
- $("pn").value=$("pd").value=$("pp").value=$("ps").value="";
- status("Producto agregado.");await cargar();
-};
-
-$("addI").onclick=async()=>{
- const name=$("in").value.trim(),extra_price=Number($("ie").value),stock=Number($("is").value);
- if(!name||!Number.isFinite(extra_price)||extra_price<0||!Number.isInteger(stock)||stock<0){status("Completa nombre, precio extra y existencia.");return}
- const {error}=await db.from("ingredients").insert({name,extra_price,stock,is_available:$("iav").checked});
- if(error){status("No se pudo agregar: "+error.message);return}
- $("in").value="";$("ie").value="";$("is").value="";
- status("Ingrediente agregado.");await cargar();
-};
-
-$("refreshBtn").onclick=cargar;
+$("refreshBtn").onclick=loadData;
 $("logoutBtn").onclick=async()=>{await db.auth.signOut();$("panel").classList.add("hidden");$("login").classList.remove("hidden");status("Sesión cerrada.");};
 
 (async()=>{
  const {data:{session}}=await db.auth.getSession();
- if(session) await comprobarAdmin();
- else status("Listo. Inicia sesión con tu cuenta administradora.");
+ if(session)await checkAdmin();else status("Listo. Inicia sesión con tu cuenta administradora.");
 })();
 </script>
 </body>
