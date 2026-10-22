@@ -1,0 +1,189 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crazy Bites | Tienda</title>
+<style>
+:root{--pink:#ff3b75;--orange:#ff7a18;--ink:#211329;--cream:#fff7ef}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:var(--cream);color:var(--ink)}
+header{background:var(--ink);color:white;text-align:center;padding:25px 15px}
+.logo{font-size:35px;font-weight:900;color:#ffb21b}
+header p{margin:8px 0}
+main{max-width:1000px;margin:auto;padding:18px}
+h2{margin-top:26px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}
+.card{background:white;border-radius:16px;padding:16px;box-shadow:0 3px 12px #21132915}
+.emoji{font-size:45px}
+.price{font-size:22px;font-weight:bold;color:#e94b70}
+button{border:0;border-radius:10px;background:var(--pink);color:white;padding:12px 15px;font-weight:bold;cursor:pointer}
+button:disabled{background:#aaa;cursor:not-allowed}
+.secondary{background:var(--ink)}
+input,select,textarea{width:100%;padding:11px;margin:6px 0 12px;border:1px solid #ddd;border-radius:9px;font:inherit}
+label{font-size:14px;font-weight:bold}
+.extra{display:flex;align-items:center;gap:8px;margin:8px 0;font-weight:normal}
+.extra input{width:auto;margin:0}
+.muted{color:#777;font-size:13px}
+#cart{background:white;border-radius:15px;padding:16px;margin-top:20px}
+.cartline{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #eee}
+footer{text-align:center;padding:25px;color:#777}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">🔥 CRAZY BITES 🔥</div>
+  <p>¡Arma tus antojos a tu gusto!</p>
+  <p>Botanas locas • Ingredientes • Extras</p>
+</header>
+
+<main>
+  <div id="status" class="muted">Conectando con el catálogo...</div>
+  <h2>🍍 Nuestro menú</h2>
+  <div id="products" class="grid"></div>
+
+  <section id="builder" class="card" hidden>
+    <h2 id="selectedName">Personaliza tu producto</h2>
+    <p id="selectedDescription"></p>
+    <p>Precio base: <strong id="basePrice"></strong></p>
+    <label for="quantity">Cantidad</label>
+    <input id="quantity" type="number" min="1" max="20" value="1">
+    <h3>Elige tus ingredientes</h3>
+    <div id="ingredients"></div>
+    <button id="addButton">Agregar al carrito</button>
+    <button class="secondary" id="cancelButton">Cancelar</button>
+  </section>
+
+  <section id="cart">
+    <h2>🛒 Tu pedido</h2>
+    <div id="cartLines">Tu carrito está vacío.</div>
+    <h3>Total: <span id="total">$0.00</span></h3>
+    <h2>📍 Datos para tu pedido</h2>
+    <label for="customer">Tu nombre</label>
+    <input id="customer" placeholder="Nombre" autocomplete="name">
+    <label for="phone">Tu teléfono (opcional)</label>
+    <input id="phone" type="tel" placeholder="Número de contacto">
+    <label for="delivery">¿Cómo recibirás tu pedido?</label>
+    <select id="delivery">
+      <option value="Recoger en el negocio">Recoger en el negocio</option>
+      <option value="Envío a domicilio">Envío a domicilio</option>
+    </select>
+    <label for="address">Dirección (si es envío)</label>
+    <input id="address" placeholder="Calle, número y colonia">
+    <label for="notes">Indicaciones adicionales</label>
+    <textarea id="notes" rows="2" placeholder="Ej. sin picante"></textarea>
+    <button id="whatsappButton">Enviar pedido por WhatsApp</button>
+    <p class="muted">El pedido se enviará para confirmar disponibilidad, entrega y pago.</p>
+  </section>
+</main>
+<footer>Crazy Bites · Gracias por tu preferencia ❤️</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const cfg=window.CRAZY_BITES_CONFIG;
+let db=null,products=[],ingredients=[],selected=null,cart=[];
+const money=n=>new Intl.NumberFormat("es-MX",{style:"currency",currency:"MXN"}).format(n);
+const safe=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const stockLabel=n=>Number(n)>0?`Existencias: ${n}`:"Agotado";
+function showStatus(s){$("status").textContent=s}
+function config(){
+ if(!cfg||!cfg.SUPABASE_URL||!cfg.SUPABASE_ANON_KEY){
+  showStatus("Falta la configuración de Supabase. Revisa config.js.");return false;
+ }
+ db=window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY);
+ return true;
+}
+async function load(){
+ if(!config())return;
+ const [pr,ir]=await Promise.all([
+  db.from("products").select("id,name,description,price,stock,is_available,sort_order").eq("is_available",true).gt("stock",0).order("sort_order"),
+  db.from("ingredients").select("id,name,extra_price,stock,is_available").eq("is_available",true).gt("stock",0).order("name")
+ ]);
+ if(pr.error||ir.error){
+  console.error(pr.error,ir.error);
+  showStatus("No se pudo cargar el catálogo. Hay que revisar los permisos de lectura de Supabase.");
+  $("products").innerHTML='<p>El catálogo todavía no está disponible. Intenta más tarde.</p>';return;
+ }
+ products=pr.data||[];ingredients=ir.data||[];
+ showStatus(products.length?"¡Elige tus antojos!":"Todavía no hay productos disponibles. El administrador debe activar existencias.");
+ renderProducts();
+}
+function renderProducts(){
+ $("products").innerHTML=products.length?products.map(p=>`
+ <article class="card">
+  <div class="emoji">${emoji(p.name)}</div>
+  <h3>${safe(p.name)}</h3><p>${safe(p.description||"Preparado a tu gusto")}</p>
+  <div class="price">${money(Number(p.price))}</div>
+  <p class="muted">${stockLabel(p.stock)}</p>
+  <button data-product="${safe(p.id)}">Personalizar</button>
+ </article>`).join(""):"<p>Por ahora no hay productos publicados.</p>";
+ $("products").querySelectorAll("[data-product]").forEach(b=>b.onclick=()=>openProduct(b.dataset.product));
+}
+function emoji(n){
+ const s=String(n).toLowerCase();
+ if(s.includes("pepino"))return "🥒";
+ if(s.includes("jícama")||s.includes("jicama"))return "🥗";
+ if(s.includes("piña")||s.includes("pina"))return "🍍";
+ if(s.includes("manzana"))return "🍎";
+ if(s.includes("sandía")||s.includes("sandia"))return "🍉";
+ if(s.includes("uva"))return "🍇";
+ return "🌶️";
+}
+function openProduct(id){
+ selected=products.find(p=>String(p.id)===String(id));if(!selected)return;
+ $("selectedName").textContent=selected.name;
+ $("selectedDescription").textContent=selected.description||"Personaliza tu antojo.";
+ $("basePrice").textContent=money(Number(selected.price));
+ $("quantity").value=1;
+ $("ingredients").innerHTML=ingredients.length?ingredients.map(i=>`
+ <label class="extra"><input type="checkbox" value="${safe(i.id)}">
+ <span>${safe(i.name)}${Number(i.extra_price)>0?" (+"+money(Number(i.extra_price))+")":""}</span>
+ </label>`).join(""):"<p>No hay ingredientes extras disponibles.</p>";
+ $("builder").hidden=false;$("builder").scrollIntoView({behavior:"smooth"});
+}
+$("cancelButton").onclick=()=>{$("builder").hidden=true;selected=null};
+$("addButton").onclick=()=>{
+ if(!selected)return;
+ const quantity=Math.max(1,Math.min(20,parseInt($("quantity").value,10)||1));
+ const ids=[...$("ingredients").querySelectorAll("input:checked")].map(x=>x.value);
+ const extras=ingredients.filter(i=>ids.includes(String(i.id)));
+ cart.push({product:selected,quantity,extras});
+ $("builder").hidden=true;selected=null;renderCart();
+ $("cart").scrollIntoView({behavior:"smooth"});
+};
+function renderCart(){
+ if(!cart.length){$("cartLines").textContent="Tu carrito está vacío.";$("total").textContent=money(0);return}
+ $("cartLines").innerHTML=cart.map((c,n)=>{
+ const extraSum=c.extras.reduce((s,i)=>s+Number(i.extra_price||0),0);
+ const line=(Number(c.product.price)+extraSum)*c.quantity;
+ return `<div class="cartline"><div><strong>${safe(c.product.name)} × ${c.quantity}</strong><br><span class="muted">${safe(c.extras.map(i=>i.name).join(", ")||"Sin extras")}</span><br>${money(line)}</div><button class="secondary" data-remove="${n}">Quitar</button></div>`;
+ }).join("");
+ $("cartLines").querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>{cart.splice(Number(b.dataset.remove),1);renderCart()});
+ $("total").textContent=money(cart.reduce((s,c)=>s+(Number(c.product.price)+c.extras.reduce((a,i)=>a+Number(i.extra_price||0),0))*c.quantity,0));
+}
+$("whatsappButton").onclick=()=>{
+ if(!cart.length){alert("Agrega al menos un producto.");return}
+ const name=$("customer").value.trim(),delivery=$("delivery").value;
+ const address=$("address").value.trim();
+ if(!name){alert("Escribe tu nombre.");$("customer").focus();return}
+ if(delivery==="Envío a domicilio"&&!address){alert("Escribe tu dirección de entrega.");$("address").focus();return}
+ const number=String(cfg?.WHATSAPP_NUMBER||"").replace(/\D/g,"");
+ if(!number){alert("Falta configurar el número de WhatsApp en config.js.");return}
+ const lines=cart.map(c=>{
+ const extras=c.extras.map(i=>i.name).join(", ")||"Sin extras";
+ return `• ${c.quantity} × ${c.product.name}\n  Ingredientes extras: ${extras}`;
+ });
+ const total=$("total").textContent;
+ const msg=`¡Hola, Crazy Bites! Quiero hacer este pedido:\n\n${lines.join("\n")}\n\nTotal estimado: ${total}\nNombre: ${name}\nTeléfono: ${$("phone").value.trim()||"No indicado"}\nEntrega: ${delivery}\nDirección: ${address||"No aplica"}\nIndicaciones: ${$("notes").value.trim()||"Ninguna"}\n\n¿Me confirman disponibilidad y entrega?`;
+ window.open("https://wa.me/"+number+"?text="+encodeURIComponent(msg),"_blank");
+};
+load().catch(e=>{console.error(e);showStatus("Ocurrió un error al conectar con el catálogo.")});
+})();
+</script>
+</body>
+</html>
