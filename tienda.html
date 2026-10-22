@@ -80,12 +80,18 @@ footer{text-align:center;padding:25px;color:#777}
 <footer>Crazy Bites · Gracias por tu preferencia ❤️</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js"></script>
+<script>
+window.CRAZY_BITES_STORE_CONFIG = {
+  SUPABASE_URL: "https://rqsscrkqucvpdsvywfzx.supabase.co",
+  SUPABASE_ANON_KEY: "sb_publishable_Szo8AiYpTfg6YY9DuGv9Nw_p4pV3RHw",
+  WHATSAPP_NUMBER: "522471746007"
+};
+</script>
 <script>
 (function(){
 "use strict";
 const $=id=>document.getElementById(id);
-const cfg=window.CRAZY_BITES_CONFIG;
+const cfg=window.CRAZY_BITES_STORE_CONFIG;
 let db=null,products=[],ingredients=[],selected=null,cart=[];
 const money=n=>new Intl.NumberFormat("es-MX",{style:"currency",currency:"MXN"}).format(n);
 const safe=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
