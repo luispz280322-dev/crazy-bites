@@ -13,9 +13,15 @@ section{background:white;padding:16px;margin:15px 0;border-radius:12px;box-shado
 input,button{font-size:16px;padding:10px;margin:5px 0;border-radius:7px;box-sizing:border-box}
 input:not([type=checkbox]){width:100%;border:1px solid #ccc}
 button{background:#b52c18;color:white;border:0;cursor:pointer}
-table{width:100%;border-collapse:collapse}
-td,th{padding:8px;border-bottom:1px solid #ddd;text-align:left}
-.wrap{overflow-x:auto}
+
+table{width:100%;border-collapse:collapse;min-width:520px}
+td,th{padding:8px;border-bottom:1px solid #ddd;text-align:left;vertical-align:middle}
+.wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+td input:not([type=checkbox]){width:120px;max-width:120px}
+td input[type=number]{width:85px;max-width:85px}
+td input[type=checkbox]{width:24px;height:24px}
+td button{white-space:nowrap}
+
 .hidden{display:none}
 #status{background:#eee;padding:12px;border-radius:8px;white-space:pre-wrap}
 </style>
